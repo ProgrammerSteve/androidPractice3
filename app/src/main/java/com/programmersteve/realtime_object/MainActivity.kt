@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
         private const val MAX_FONT_SIZE = 96F
     }
 
+    val paint=Paint()
     lateinit var imageView:ImageView
     lateinit var button:Button
     lateinit var bitmap:Bitmap
@@ -75,7 +76,38 @@ class MainActivity : AppCompatActivity() {
         )
         // Step 3: feed given image to the model and print the detection result
         val results = detector.detect(image)
+        val locations=results.map {obj->
+            obj.boundingBox
+        }
+        val labels=results.map{obj->
+            obj.categories
+        }
+        Log.d(TAG, "locations $locations")
+        Log.d(TAG, "labels $labels")
 
+        val mutable=bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas=Canvas(mutable)
+        val h=mutable.height
+
+        paint.textSize=h/15f
+        paint.strokeWidth=h/85f
+
+        results.forEachIndexed{index,obj->
+            val location=obj.boundingBox
+            paint.style=Paint.Style.STROKE
+            canvas.drawRect(location,paint)
+            for (category in obj.categories){
+                val score=category.score
+                //I want the category name here
+                val name=category.label
+                Log.d(TAG, "Name $name")
+                Log.d(TAG, "score $score")
+                paint.style=Paint.Style.FILL
+                canvas.drawText("$name $score",location.left,location.top,paint)
+            }
+        }
+
+        imageView.setImageBitmap(mutable)
         // Step 4: Parse the detection result and show it
         debugPrint(results)
     }
